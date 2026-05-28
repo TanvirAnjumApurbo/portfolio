@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/output/
 
 # next.js
 /.next/
@@ -35,6 +36,13 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# local assistant/tool settings
+/.claude/
+
+# local asset drop-ins copied into public/images
+/hero_photo.png
+/name.svg
 
 # typescript
 *.tsbuildinfo
