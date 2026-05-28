@@ -1,4 +1,3 @@
-import { HeroSection } from "@/components/hero/hero-section";
 import { NameReveal } from "@/components/NameReveal";
 import { AboutSection } from "@/components/about/about-section";
 import { ChaptersSection } from "@/components/chapters/chapters-section";
@@ -11,7 +10,6 @@ import { ContactSection } from "@/components/contact/contact-section";
 export default function Home() {
   return (
     <main>
-      <HeroSection />
       <NameReveal />
       <AboutSection />
       <ChaptersSection />
