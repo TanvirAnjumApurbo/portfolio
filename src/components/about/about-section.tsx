@@ -1,8 +1,39 @@
 "use client";
 
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import { gsap } from "@/lib/gsap";
+
 export function AboutSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const paragraphRef = useRef<HTMLParagraphElement>(null);
+
+  useGSAP(
+    () => {
+      const reduce = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      if (reduce) return;
+
+      gsap.from([headingRef.current, paragraphRef.current], {
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        stagger: 0.1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 80%",
+        },
+      });
+    },
+    { scope: sectionRef },
+  );
+
   return (
     <section
+      ref={sectionRef}
       className="relative min-h-screen flex items-center"
       style={{
         background:
@@ -11,6 +42,7 @@ export function AboutSection() {
     >
       <div className="w-full max-w-[1400px] px-[6vw] py-32 md:ml-[10vw]">
         <h2
+          ref={headingRef}
           className="font-[family-name:var(--font-display)] font-black lowercase leading-[1] tracking-[-0.03em] mb-10"
           style={{
             fontSize: "clamp(2.5rem, 5.5vw, 5rem)",

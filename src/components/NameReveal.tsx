@@ -9,22 +9,23 @@ const HERO_PHOTO = "/images/hero-photo.png";
 const NAME_MARK = "/images/name.svg";
 
 // name.svg is a logotype with white glyphs on transparent. Its viewBox is
-// tightly cropped to the content (0 232.2 1554.432 983.04, aspect ~1.581:1),
-// content center ~(762.2, 717.2) within that box. This single placement box
-// matches that aspect ratio and lands the content center on the viewport
-// center (836, 470), sized to fit a 390px viewport. Nudge x/y if the logotype
-// looks off-center after a future name.svg edit.
-const NAME_IMG = { x: 634, y: 341.5, w: 412, h: 260.5 };
-// scaling origin = the logotype's optical center (also the viewport center)
-const NAME_ORIGIN = "836 470";
+// tightly cropped to the content (0 232.2 1554.432 983.04, aspect ~1.581:1).
+// This single placement box is reused by BOTH the photo-mask reveal and the
+// solid-white logotype, so they share one coordinate space — the name never
+// shifts during the photo→white hand-off, it just changes fill in place.
+// The box sits in the upper-middle (content center ~836,310 in the 1672×941
+// viewBox) to leave the lower half for the headline + chips, GTA-poster style.
+const NAME_IMG = { x: 634, y: 181.5, w: 412, h: 260.5 };
+// scaling origin = the logotype's optical centre (shared by both layers)
+const NAME_ORIGIN = "836 310";
 
 export function NameReveal() {
   const sectionRef = useRef<HTMLElement>(null);
-  const holesRef = useRef<SVGGElement>(null); // the white-glyph windows (scale these)
-  const overlayRef = useRef<SVGRectElement>(null); // black sheet
-  const cardSheetRef = useRef<HTMLDivElement>(null); // solid sheet that lands first
-  const cardRef = useRef<HTMLDivElement>(null); // poster content (slides + fades in)
-  const headlineRef = useRef<HTMLHeadingElement>(null); // gradient headline that ignites
+  const holesRef = useRef<SVGGElement>(null); // photo-window glyphs (the reveal)
+  const wordmarkRef = useRef<SVGGElement>(null); // solid-white glyphs (same box)
+  const overlayRef = useRef<SVGRectElement>(null); // black sheet behind the name
+  const cardRef = useRef<HTMLDivElement>(null); // headline + chips (rise in below)
+  const headlineRef = useRef<HTMLHeadingElement>(null); // gradient headline
   const hintRef = useRef<HTMLDivElement>(null); // scroll hint over the bare photo
 
   useGSAP(
@@ -34,9 +35,16 @@ export function NameReveal() {
       ).matches;
 
       if (reduce) {
-        // Static, legible fallback: name shown as windows onto the still photo.
-        // No pin, no scrub — the masked state is the hero.
+        // Static, legible fallback: the finished poster — solid white name on
+        // black, headline in its final warm (gold-bottom) gradient, chips shown.
+        gsap.set([holesRef.current, wordmarkRef.current], {
+          scale: 1,
+          svgOrigin: NAME_ORIGIN,
+        });
         gsap.set(overlayRef.current, { opacity: 1 });
+        gsap.set(wordmarkRef.current, { opacity: 1 });
+        gsap.set(cardRef.current, { opacity: 1, y: 0 });
+        gsap.set(headlineRef.current, { backgroundPosition: "50% 100%" });
         gsap.set(hintRef.current, { opacity: 0 });
         return;
       }
@@ -45,60 +53,59 @@ export function NameReveal() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "+=360%",
+          end: "+=420%",
           scrub: 1,
           pin: true,
           anticipatePin: 1,
         },
       });
 
-      // 1. letter-windows start oversized and shrink to readable, settling
-      //    early so the readable name can hold for a beat
+      // 1. the letter-windows AND the white wordmark share one scale tween, so
+      //    they stay perfectly registered: glyphs start oversized and shrink to
+      //    a readable logotype, settling early to hold for a beat
       tl.fromTo(
-        holesRef.current,
+        [holesRef.current, wordmarkRef.current],
         { scale: 5, svgOrigin: NAME_ORIGIN },
         { scale: 1, svgOrigin: NAME_ORIGIN, ease: "power2.out", duration: 0.5 },
         0,
       );
-      // 2. black sheet sweeps in at the very start (before this, full photo)
-      tl.fromTo(
-        overlayRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.12 },
-        0,
-      );
+      // 2. black sheet sweeps in behind the name (before this, full photo)
+      tl.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.14 }, 0);
       // scroll hint only belongs to the bare-photo moment; gone with the sheet
       tl.to(hintRef.current, { opacity: 0, duration: 0.08 }, 0);
-      // 3. dissolve to the poster: the sheet eases up over the settled reveal
+      // 3. the hand-off: the solid-white wordmark fades in over the settling
+      //    photo-glyphs at the SAME box/scale, so the name simply changes fill
+      //    (photo → white) in place — no disappearance, no jump, no black gap
       tl.fromTo(
-        cardSheetRef.current,
+        wordmarkRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.24, ease: "power1.inOut" },
-        0.5,
+        { opacity: 1, duration: 0.28, ease: "power1.inOut" },
+        0.42,
       );
-      // 4. poster content fades + rises in, overlapping the dissolve
+      // 4. headline + chips rise in below the solidified name, like the poster's
+      //    tagline arriving under the logotype
       tl.fromTo(
         cardRef.current,
-        { opacity: 0, y: 42 },
-        { opacity: 1, y: 0, duration: 0.26, ease: "power2.out" },
-        0.6,
+        { opacity: 0, y: 36 },
+        { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" },
+        0.68,
       );
-      // 5. the signature beat: the headline ignites — a dim, desaturated shape
-      //    brightens + saturates into the full gradient as you keep scrolling,
-      //    with a subtle drift so the colour also flows through the letters
+      // 5. closing beat: the headline is already vivid magenta-pink, and a warm
+      //    band drifts gently up through the letters (pink → coral → gold) with
+      //    a faint brightness lift — colour warming in, not a hard slide
       tl.fromTo(
         headlineRef.current,
-        { filter: "brightness(0.35) saturate(0.5)", backgroundPosition: "50% 0%" },
+        { filter: "brightness(0.92) saturate(0.9)", backgroundPosition: "50% 0%" },
         {
           filter: "brightness(1) saturate(1)",
           backgroundPosition: "50% 100%",
-          duration: 0.36,
+          duration: 0.42,
           ease: "power1.inOut",
         },
-        0.66,
+        0.92,
       );
-      // 6. hold the finished poster before the section unpins
-      tl.to({}, { duration: 0.12 }, 1.0);
+      // 6. hold the finished poster after the warm-shift fully resolves, then unpin
+      tl.to({}, { duration: 0.12 }, 1.34);
     },
     { scope: sectionRef },
   );
@@ -111,7 +118,8 @@ export function NameReveal() {
     >
       <h1 className="sr-only">Tanvir Anjum Apurbo</h1>
 
-      {/* Photo + the name.svg windows share one SVG coordinate space — alignment is automatic */}
+      {/* Photo, the photo-window glyphs and the white wordmark all share one SVG
+          coordinate space — alignment between them is automatic */}
       <svg
         className="absolute inset-0 h-full w-full"
         viewBox="0 0 1672 941"
@@ -172,6 +180,19 @@ export function NameReveal() {
           preserveAspectRatio="xMidYMid slice"
           mask="url(#nameMask)"
         />
+
+        {/* L4: solid-white wordmark, identical box + scale to the windows above,
+            fades in on top so the name turns from photo to white in place */}
+        <g ref={wordmarkRef} opacity="0">
+          <image
+            href={NAME_MARK}
+            x={NAME_IMG.x}
+            y={NAME_IMG.y}
+            width={NAME_IMG.w}
+            height={NAME_IMG.h}
+            preserveAspectRatio="xMidYMid meet"
+          />
+        </g>
       </svg>
 
       {/* scroll hint, only over the bare photo */}
@@ -183,34 +204,20 @@ export function NameReveal() {
         <span className="h-8 w-px origin-top bg-white/30 animate-[scroll-line_2.4s_ease-in-out_infinite]" />
       </div>
 
-      {/* solid sheet — lands first to cover the reveal */}
-      <div
-        ref={cardSheetRef}
-        className="absolute inset-0 z-20 bg-[#070606] opacity-0"
-      />
-
-      {/* final poster: white logotype up top, igniting gradient headline, role chips */}
+      {/* poster tagline: igniting gradient headline + role chips, below the name */}
       <div
         ref={cardRef}
-        className="absolute inset-0 z-30 flex flex-col items-center justify-center px-6 pb-[10vh] text-center opacity-0"
+        className="absolute inset-x-0 top-[54%] z-30 flex flex-col items-center px-6 text-center opacity-0"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={NAME_MARK}
-          alt="Tanvir Anjum Apurbo"
-          draggable={false}
-          className="h-auto w-[clamp(210px,40vw,540px)] select-none"
-        />
-
         <h2
           ref={headlineRef}
-          className="mt-12 font-[family-name:var(--font-display)] font-black uppercase leading-[0.92] tracking-[-0.01em] sm:mt-16"
+          className="font-[family-name:var(--font-display)] font-black uppercase leading-[0.92] tracking-[-0.01em]"
           style={{
             fontSize: "clamp(2rem, 6.2vw, 4.75rem)",
             background:
-              "linear-gradient(168deg, #ffb0d8 0%, #ff5fa6 32%, #e84393 58%, #ff7a52 100%)",
-            backgroundSize: "100% 135%",
-            backgroundPosition: "50% 100%",
+              "linear-gradient(165deg, #ff86c2 0%, #f0508c 18%, #e8437d 36%, #f17a54 68%, #fbc35d 100%)",
+            backgroundSize: "100% 150%",
+            backgroundPosition: "50% 0%",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
