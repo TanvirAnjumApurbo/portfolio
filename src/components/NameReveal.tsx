@@ -19,6 +19,14 @@ const NAME_IMG = { x: 634, y: 181.5, w: 412, h: 260.5 };
 // scaling origin = the logotype's optical centre (shared by both layers)
 const NAME_ORIGIN = "836 310";
 
+// The hero opens zoomed so far into the middle line ("anjum") that the first
+// frame reads as abstract photo, not a glyph. A geometric ease pulls it back at
+// a constant *perceived* zoom rate (scale = START_SCALE^(1−p)) — a smooth
+// dolly-out across the huge range, never a linear rush through the middle.
+const START_SCALE = 50;
+const zoomOutEase = (p: number) =>
+  (START_SCALE - START_SCALE ** (1 - p)) / (START_SCALE - 1);
+
 export function NameReveal() {
   const sectionRef = useRef<HTMLElement>(null);
   const holesRef = useRef<SVGGElement>(null); // photo-window glyphs (the reveal)
@@ -53,42 +61,48 @@ export function NameReveal() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "+=420%",
+          end: "+=480%",
           scrub: 1,
           pin: true,
           anticipatePin: 1,
         },
       });
 
-      // 1. the letter-windows AND the white wordmark share one scale tween, so
-      //    they stay perfectly registered: glyphs start oversized and shrink to
-      //    a readable logotype, settling early to hold for a beat
+      // 1. the letter-windows AND the white wordmark share one long scale tween,
+      //    so they stay perfectly registered. It opens enormous (START_SCALE —
+      //    so deep inside the middle line that the first frame isn't readable as
+      //    a glyph), then the geometric ease dollies back at a constant
+      //    perceived zoom rate: most of the scroll is the steady pull-out
       tl.fromTo(
         [holesRef.current, wordmarkRef.current],
-        { scale: 5, svgOrigin: NAME_ORIGIN },
-        { scale: 1, svgOrigin: NAME_ORIGIN, ease: "power2.out", duration: 0.5 },
+        { scale: START_SCALE, svgOrigin: NAME_ORIGIN },
+        { scale: 1, svgOrigin: NAME_ORIGIN, ease: zoomOutEase, duration: 1.0 },
         0,
       );
       // 2. black sheet sweeps in behind the name (before this, full photo)
-      tl.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.14 }, 0);
+      tl.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.12 }, 0);
       // scroll hint only belongs to the bare-photo moment; gone with the sheet
       tl.to(hintRef.current, { opacity: 0, duration: 0.08 }, 0);
-      // 3. the hand-off: the solid-white wordmark fades in over the settling
-      //    photo-glyphs at the SAME box/scale, so the name simply changes fill
-      //    (photo → white) in place — no disappearance, no jump, no black gap
+      // 3. the photo → white hand-off begins EARLY, while the letters are still
+      //    large (~scale 10.5 — only a few glyphs on screen, like the reference),
+      //    and dissolves VERY slowly to solid white by a medium size (~scale 1.8).
+      //    The long linear dissolve makes the opacity step down gently (100% →
+      //    90% → …) over a big scroll interval as the name keeps shrinking, so
+      //    the wash-out reads clearly — then it carries on shrinking as white
       tl.fromTo(
         wordmarkRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.28, ease: "power1.inOut" },
-        0.42,
+        { opacity: 1, duration: 0.45, ease: "none" },
+        0.4,
       );
-      // 4. headline + chips rise in below the solidified name, like the poster's
-      //    tagline arriving under the logotype
+      // 4. once the white name has shrunk enough to clear the space below it,
+      //    the tagline starts IGNITING (faint at first), then keeps rising as
+      //    the name settles — like the date glowing in under the logotype
       tl.fromTo(
         cardRef.current,
         { opacity: 0, y: 36 },
-        { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" },
-        0.68,
+        { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
+        0.9,
       );
       // 5. closing beat: the headline is already vivid magenta-pink, and a warm
       //    band drifts gently up through the letters (pink → coral → gold) with
@@ -102,10 +116,10 @@ export function NameReveal() {
           duration: 0.42,
           ease: "power1.inOut",
         },
-        0.92,
+        1.1,
       );
       // 6. hold the finished poster after the warm-shift fully resolves, then unpin
-      tl.to({}, { duration: 0.12 }, 1.34);
+      tl.to({}, { duration: 0.12 }, 1.52);
     },
     { scope: sectionRef },
   );
