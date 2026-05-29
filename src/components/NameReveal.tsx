@@ -27,10 +27,23 @@ const START_SCALE = 50;
 const zoomOutEase = (p: number) =>
   (START_SCALE - START_SCALE ** (1 - p)) / (START_SCALE - 1);
 
+// The hero photo OPENS slightly zoomed-in (PHOTO_ZOOM) and de-zooms to a perfect
+// fit (1.0) as scrolling begins — it reads as a gentle shrink while the photo
+// always stays full-bleed (no black border). The de-zoom overlaps the start of
+// the glyph pull-out, so it runs straight into the letters with no pause.
+const PHOTO_ZOOM = 1.16;
+// how long the de-zoom takes; long enough to overlap the letters emerging so
+// the shrink flows seamlessly into the reveal (no gap), short enough to read.
+const PHOTO_DEZOOM_DUR = 0.35;
+// origin for the photo's de-zoom = centre of the 1672×941 viewBox
+const PHOTO_ORIGIN = "836 470.5";
+
 export function NameReveal() {
   const sectionRef = useRef<HTMLElement>(null);
   const holesRef = useRef<SVGGElement>(null); // photo-window glyphs (the reveal)
   const wordmarkRef = useRef<SVGGElement>(null); // solid-white glyphs (same box)
+  const bgPhotoRef = useRef<SVGImageElement>(null); // full-bleed hero photo (L1)
+  const photoRef = useRef<SVGImageElement>(null); // photo inside the windows (L3)
   const overlayRef = useRef<SVGRectElement>(null); // black sheet behind the name
   const cardRef = useRef<HTMLDivElement>(null); // headline + chips (rise in below)
   const headlineRef = useRef<HTMLHeadingElement>(null); // gradient headline
@@ -48,6 +61,10 @@ export function NameReveal() {
         gsap.set([holesRef.current, wordmarkRef.current], {
           scale: 1,
           svgOrigin: NAME_ORIGIN,
+        });
+        gsap.set([bgPhotoRef.current, photoRef.current], {
+          scale: 1,
+          svgOrigin: PHOTO_ORIGIN,
         });
         gsap.set(overlayRef.current, { opacity: 1 });
         gsap.set(wordmarkRef.current, { opacity: 1 });
@@ -68,20 +85,42 @@ export function NameReveal() {
         },
       });
 
-      // 1. the letter-windows AND the white wordmark share one long scale tween,
-      //    so they stay perfectly registered. It opens enormous (START_SCALE —
-      //    so deep inside the middle line that the first frame isn't readable as
-      //    a glyph), then the geometric ease dollies back at a constant
-      //    perceived zoom rate: most of the scroll is the steady pull-out
+      // 1. OPENING SHRINK — the photo opens slightly zoomed-in (PHOTO_ZOOM,
+      //    still full-bleed) and de-zooms to a perfect fit (1.0) as scrolling
+      //    starts. Through the still-giant glyph the whole screen IS this photo,
+      //    so the de-zoom reads as a gentle shrink — but the photo always covers
+      //    the frame, so there's no black edge. It runs from the very first
+      //    pixel and its tail overlaps the letters emerging (see below), so the
+      //    shrink flows straight into the reveal with no pause. Both photo layers
+      //    move together so they stay identical.
+      tl.fromTo(
+        [bgPhotoRef.current, photoRef.current],
+        { scale: PHOTO_ZOOM, svgOrigin: PHOTO_ORIGIN },
+        {
+          scale: 1,
+          svgOrigin: PHOTO_ORIGIN,
+          duration: PHOTO_DEZOOM_DUR,
+          ease: "power1.out",
+        },
+        0,
+      );
+
+      // 2. the letters come: the windows AND the white wordmark share one long
+      //    scale tween, so they stay perfectly registered. It starts enormous
+      //    (START_SCALE — so big it covers the whole screen as the photo, hiding
+      //    that it's a glyph) and the geometric ease dollies back at a constant
+      //    perceived zoom rate. It also starts at 0 and runs UNDER the photo
+      //    de-zoom: while the glyph still covers everything you only see the
+      //    photo shrink, then the letters resolve out of it — one continuous move.
       tl.fromTo(
         [holesRef.current, wordmarkRef.current],
         { scale: START_SCALE, svgOrigin: NAME_ORIGIN },
         { scale: 1, svgOrigin: NAME_ORIGIN, ease: zoomOutEase, duration: 1.0 },
         0,
       );
-      // 2. black sheet sweeps in behind the name (before this, full photo)
+      // black sheet sweeps in behind the name as the letters part from the photo
       tl.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.12 }, 0);
-      // scroll hint only belongs to the bare-photo moment; gone with the sheet
+      // scroll hint belongs to the full-photo opening; gone once the letters come
       tl.to(hintRef.current, { opacity: 0, duration: 0.08 }, 0);
       // 3. the photo → white hand-off begins EARLY, while the letters are still
       //    large (~scale 10.5 — only a few glyphs on screen, like the reference),
@@ -165,6 +204,7 @@ export function NameReveal() {
 
         {/* L1: the hero photo fills the screen */}
         <image
+          ref={bgPhotoRef}
           href={HERO_PHOTO}
           x="0"
           y="0"
@@ -184,16 +224,21 @@ export function NameReveal() {
           opacity="0"
         />
 
-        {/* L3: the same fixed photo, revealed only through the letter-windows */}
-        <image
-          href={HERO_PHOTO}
-          x="0"
-          y="0"
-          width="1672"
-          height="941"
-          preserveAspectRatio="xMidYMid slice"
-          mask="url(#nameMask)"
-        />
+        {/* L3: the same photo, revealed only through the letter-windows. The
+            mask sits on the GROUP (no transform) so the windows stay locked to
+            the white wordmark; only the photo INSIDE scales, so the opening
+            zoom-out never knocks the name out of registration. */}
+        <g mask="url(#nameMask)">
+          <image
+            ref={photoRef}
+            href={HERO_PHOTO}
+            x="0"
+            y="0"
+            width="1672"
+            height="941"
+            preserveAspectRatio="xMidYMid slice"
+          />
+        </g>
 
         {/* L4: solid-white wordmark, identical box + scale to the windows above,
             fades in on top so the name turns from photo to white in place */}
