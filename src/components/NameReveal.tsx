@@ -78,8 +78,12 @@ export function NameReveal() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "+=480%",
-          scrub: 1,
+          // Short pin: the whole sequence resolves in ~one flick (Lenis inertia
+          // carries it). Was 480% (~3 scrolls); 150% reads as fast + buttery.
+          end: "+=150%",
+          // Low scrub so the timeline rides the smoothed Lenis scroll closely
+          // instead of trailing a full second behind it.
+          scrub: 0.6,
           pin: true,
           anticipatePin: 1,
         },
