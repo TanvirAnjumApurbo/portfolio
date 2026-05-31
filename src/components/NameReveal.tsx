@@ -37,6 +37,24 @@ const PHOTO_ZOOM = 1.16;
 const PHOTO_DEZOOM_DUR = 0.35;
 // origin for the photo's de-zoom = centre of the 1672×941 viewBox
 const PHOTO_ORIGIN = "836 470.5";
+const HERO_TITLE_GRADIENT =
+  "linear-gradient(170deg, #5d0c55 0%, #b11279 22%, #ee2e73 45%, #ff8769 68%, #ffd36a 100%)";
+const ABOUT_HEADING_GRADIENT =
+  "linear-gradient(180deg, #b51f76 0%, #e83778 52%, #ff876e 100%)";
+const ABOUT_COPY = [
+  "I am most myself in the quiet hours, when a hard problem and a clear mind",
+  "are the only two things in the room. Curiosity is the engine; patience is the wheel.",
+  "I move slowly enough to understand and quickly enough to keep pace with my own questions,",
+  "and I've learned that the things worth building are rarely the things that come easy.",
+  "So I reach for what sits just past the edge of the known — not loudly, not in a hurry,",
+  "but with the steady certainty of someone who has decided that limits exist only to be moved.",
+  "Calm is not the absence of ambition. In me, it's the shape ambition takes.",
+];
+const ABOUT_COPY_GRADIENT =
+  "radial-gradient(ellipse 42% 72% at 50% 50%, #ffa377 0%, #ff796d 18%, #f45274 36%, #c23576 56%, #7a1f5f 78%, #271027 100%)";
+const ABOUT_GRADIENT_SIZE = "155% 280%";
+const ABOUT_GRADIENT_START = "50% 0%";
+const ABOUT_GRADIENT_END = "50% 100%";
 
 export function NameReveal() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -47,6 +65,12 @@ export function NameReveal() {
   const overlayRef = useRef<SVGRectElement>(null); // black sheet behind the name
   const cardRef = useRef<HTMLDivElement>(null); // headline + chips (rise in below)
   const headlineRef = useRef<HTMLHeadingElement>(null); // gradient headline
+  const headlineLineRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const roleRailRef = useRef<HTMLUListElement>(null);
+  const aboutBgRef = useRef<HTMLDivElement>(null);
+  const aboutPanelRef = useRef<HTMLDivElement>(null);
+  const aboutHeadingRef = useRef<HTMLHeadingElement>(null);
+  const aboutCopyRef = useRef<HTMLParagraphElement>(null);
   const hintRef = useRef<HTMLDivElement>(null); // scroll hint over the bare photo
 
   useGSAP(
@@ -54,10 +78,13 @@ export function NameReveal() {
       const reduce = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
+      const headlineLines = headlineLineRefs.current.filter(Boolean);
+      const aboutCopy = aboutCopyRef.current;
+      const aboutTextTargets = [aboutHeadingRef.current, aboutCopy].filter(Boolean);
 
       if (reduce) {
-        // Static, legible fallback: the finished poster — solid white name on
-        // black, headline in its final warm (gold-bottom) gradient, chips shown.
+        // Static, legible fallback: show the final About state without the
+        // scroll-scrubbed handoff.
         gsap.set([holesRef.current, wordmarkRef.current], {
           scale: 1,
           svgOrigin: NAME_ORIGIN,
@@ -67,9 +94,40 @@ export function NameReveal() {
           svgOrigin: PHOTO_ORIGIN,
         });
         gsap.set(overlayRef.current, { opacity: 1 });
-        gsap.set(wordmarkRef.current, { opacity: 1 });
-        gsap.set(cardRef.current, { opacity: 1, y: 0 });
-        gsap.set(headlineRef.current, { backgroundPosition: "50% 100%" });
+        gsap.set(wordmarkRef.current, { opacity: 0 });
+        gsap.set(cardRef.current, {
+          opacity: 0,
+          y: 0,
+          scale: 1,
+          filter: "blur(0px)",
+          clipPath: "inset(0% 0% 0% 0%)",
+        });
+        gsap.set(headlineLineRefs.current, {
+          opacity: 0,
+          y: 0,
+          filter: "blur(0px)",
+          clipPath: "inset(0% 0% 0% 0%)",
+          backgroundPosition: "50% 100%",
+        });
+        gsap.set(roleRailRef.current, { opacity: 0, y: 0, filter: "blur(0px)" });
+        gsap.set(headlineRef.current, {
+          backgroundPosition: "50% 100%",
+          filter: "brightness(1) saturate(1)",
+        });
+        gsap.set(aboutBgRef.current, { opacity: 1, filter: "blur(18px) brightness(0.38)" });
+        gsap.set(aboutPanelRef.current, {
+          opacity: 1,
+          filter: "blur(0px)",
+          clipPath: "inset(0% 0% 0% 0%)",
+        });
+        gsap.set(aboutTextTargets, {
+          opacity: 1,
+          filter: "blur(0px)",
+          clipPath: "inset(0% 0% 0% 0%)",
+        });
+        gsap.set(aboutCopy, {
+          backgroundPosition: ABOUT_GRADIENT_END,
+        });
         gsap.set(hintRef.current, { opacity: 0 });
         return;
       }
@@ -78,9 +136,9 @@ export function NameReveal() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          // Short pin: the whole sequence resolves in ~one flick (Lenis inertia
-          // carries it). Was 480% (~3 scrolls); 150% reads as fast + buttery.
-          end: "+=150%",
+          // Extended pin keeps the title wipe and About reveal in one viewport
+          // before the next content section enters.
+          end: "+=330%",
           // Low scrub so the timeline rides the smoothed Lenis scroll closely
           // instead of trailing a full second behind it.
           scrub: 0.6,
@@ -143,26 +201,140 @@ export function NameReveal() {
       //    the name settles — like the date glowing in under the logotype
       tl.fromTo(
         cardRef.current,
-        { opacity: 0, y: 36 },
-        { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
+        {
+          opacity: 0,
+          filter: "blur(16px)",
+          clipPath: "inset(0% 0% 0% 0%)",
+        },
+        {
+          opacity: 1,
+          filter: "blur(0px)",
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: 0.42,
+          ease: "power3.out",
+        },
         0.9,
+      );
+      tl.fromTo(
+        headlineLines,
+        {
+          opacity: 0,
+          filter: "blur(14px)",
+          clipPath: "inset(0% 0% 0% 0%)",
+        },
+        {
+          opacity: 1,
+          filter: "blur(0px)",
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: 0.32,
+          stagger: 0.055,
+          ease: "power3.out",
+        },
+        0.94,
+      );
+      tl.fromTo(
+        roleRailRef.current,
+        { opacity: 0, filter: "blur(10px)" },
+        {
+          opacity: 1,
+          filter: "blur(0px)",
+          duration: 0.26,
+          ease: "power2.out",
+        },
+        1.15,
       );
       // 5. closing beat: the headline is already vivid magenta-pink, and a warm
       //    band drifts gently up through the letters (pink → coral → gold) with
       //    a faint brightness lift — colour warming in, not a hard slide
       tl.fromTo(
         headlineRef.current,
-        { filter: "brightness(0.92) saturate(0.9)", backgroundPosition: "50% 0%" },
+        { filter: "brightness(0.92) saturate(0.9)" },
         {
-          filter: "brightness(1) saturate(1)",
-          backgroundPosition: "50% 100%",
-          duration: 0.42,
+          filter: "brightness(1.08) saturate(1.08)",
+          duration: 0.58,
           ease: "power1.inOut",
         },
-        1.1,
+        0.98,
       );
-      // 6. hold the finished poster after the warm-shift fully resolves, then unpin
-      tl.to({}, { duration: 0.12 }, 1.52);
+      tl.fromTo(
+        headlineLines,
+        { backgroundPosition: "50% 0%" },
+        {
+          backgroundPosition: "50% 100%",
+          duration: 0.58,
+          ease: "power1.inOut",
+        },
+        0.98,
+      );
+      // 6. Hold the finished title briefly, then wipe it away in place.
+      tl.to({}, { duration: 0.18 }, 1.58);
+      tl.to(
+        cardRef.current,
+        {
+          opacity: 0,
+          filter: "blur(10px)",
+          clipPath: "inset(0% 0% 0% 100%)",
+          duration: 0.28,
+          ease: "power2.inOut",
+        },
+        1.74,
+      );
+      tl.to(
+        wordmarkRef.current,
+        { opacity: 0, duration: 0.22, ease: "power1.inOut" },
+        1.78,
+      );
+      tl.fromTo(
+        aboutBgRef.current,
+        { opacity: 0, scale: 1.08, filter: "blur(28px) brightness(0.18)" },
+        {
+          opacity: 1,
+          scale: 1,
+          filter: "blur(18px) brightness(0.36)",
+          duration: 0.48,
+          ease: "power2.out",
+        },
+        1.78,
+      );
+      tl.fromTo(
+        aboutPanelRef.current,
+        {
+          opacity: 0,
+          filter: "blur(16px)",
+          clipPath: "inset(0% 100% 0% 0%)",
+        },
+        {
+          opacity: 1,
+          filter: "blur(0px)",
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: 0.46,
+          ease: "power3.out",
+        },
+        1.9,
+      );
+      tl.fromTo(
+        aboutTextTargets,
+        { opacity: 0, filter: "blur(12px)" },
+        {
+          opacity: 1,
+          filter: "blur(0px)",
+          stagger: 0.035,
+          duration: 0.36,
+          ease: "power2.out",
+        },
+        1.94,
+      );
+      tl.fromTo(
+        aboutCopy,
+        { backgroundPosition: ABOUT_GRADIENT_START },
+        {
+          backgroundPosition: ABOUT_GRADIENT_END,
+          duration: 0.72,
+          ease: "power1.inOut",
+        },
+        1.98,
+      );
+      tl.to({}, { duration: 0.68 }, 2.42);
     },
     { scope: sectionRef },
   );
@@ -258,6 +430,19 @@ export function NameReveal() {
         </g>
       </svg>
 
+      <div
+        ref={aboutBgRef}
+        className="pointer-events-none absolute inset-[-8%] z-20 opacity-0"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg, rgba(7, 6, 10, 0.96) 0%, rgba(7, 6, 10, 0.84) 48%, rgba(7, 6, 10, 0.94) 100%), url('/images/hero-photo.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          willChange: "opacity, transform, filter",
+        }}
+      />
+
       {/* scroll hint, only over the bare photo */}
       <div
         ref={hintRef}
@@ -270,29 +455,47 @@ export function NameReveal() {
       {/* poster tagline: igniting gradient headline + role chips, below the name */}
       <div
         ref={cardRef}
-        className="absolute inset-x-0 top-[54%] z-30 flex flex-col items-center px-6 text-center opacity-0"
+        className="absolute inset-x-0 top-[52%] z-30 flex flex-col items-center px-5 text-center opacity-0"
+        style={{
+          willChange: "opacity, transform, filter, clip-path",
+        }}
       >
         <h2
           ref={headlineRef}
-          className="font-[family-name:var(--font-display)] font-black uppercase leading-[0.92] tracking-[-0.01em]"
+          className="font-[family-name:var(--font-display)] font-black uppercase leading-[0.88]"
           style={{
-            fontSize: "clamp(2rem, 6.2vw, 4.75rem)",
-            background:
-              "linear-gradient(165deg, #ff86c2 0%, #f0508c 18%, #e8437d 36%, #f17a54 68%, #fbc35d 100%)",
-            backgroundSize: "100% 150%",
-            backgroundPosition: "50% 0%",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            willChange: "filter, background-position, opacity, transform",
+            fontSize: "clamp(2.25rem, 7vw, 6.75rem)",
+            letterSpacing: "0",
+            textShadow: "0 0 34px rgba(224, 31, 126, 0.18)",
+            willChange: "filter",
           }}
         >
-          Building
-          <br />
-          Research-Driven AI
+          {["Building", "Research-Driven AI"].map((line, index) => (
+            <span
+              key={line}
+              ref={(node) => {
+                headlineLineRefs.current[index] = node;
+              }}
+              className="block will-change-[opacity,transform,filter,clip-path]"
+              style={{
+                background: HERO_TITLE_GRADIENT,
+                backgroundSize: "100% 180%",
+                backgroundPosition: "50% 0%",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                willChange: "opacity, transform, filter, clip-path, background-position",
+              }}
+            >
+              {line}
+            </span>
+          ))}
         </h2>
 
-        <ul className="mt-10 flex flex-wrap items-center justify-center gap-x-9 gap-y-3 text-white/65 sm:mt-12">
+        <ul
+          ref={roleRailRef}
+          className="mt-9 flex flex-wrap items-center justify-center gap-x-9 gap-y-3 text-white/70 sm:mt-11"
+        >
           <li className="flex items-center gap-2">
             <Code2 className="h-[1.05em] w-[1.05em]" strokeWidth={1.75} aria-hidden="true" />
             <span className="text-[0.78rem] uppercase tracking-[0.2em] sm:text-sm">
@@ -306,6 +509,52 @@ export function NameReveal() {
             </span>
           </li>
         </ul>
+      </div>
+
+      <div
+        ref={aboutPanelRef}
+        className="absolute inset-x-0 top-[18%] z-30 flex justify-center px-[6vw] opacity-0 sm:top-[23%] md:top-[26%]"
+        style={{
+          clipPath: "inset(0% 100% 0% 0%)",
+          willChange: "opacity, filter, clip-path",
+        }}
+      >
+        <div className="mx-auto w-full max-w-[72rem] text-left">
+          <h2
+            ref={aboutHeadingRef}
+            className="mb-6 font-[family-name:var(--font-display)] font-black lowercase leading-[0.9] sm:mb-8"
+            style={{
+              fontSize: "clamp(2.2rem, 4.7vw, 4.7rem)",
+              background: ABOUT_HEADING_GRADIENT,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              letterSpacing: "0",
+              textShadow: "0 0 30px rgba(231, 36, 126, 0.18)",
+              willChange: "opacity, filter",
+            }}
+          >
+            about me.
+          </h2>
+          <p
+            ref={aboutCopyRef}
+            className="max-w-[72rem] font-[family-name:var(--font-display)] font-extrabold leading-[1.14]"
+            style={{
+              fontSize: "clamp(1.25rem, 2.3vw, 2.25rem)",
+              letterSpacing: "0",
+              textShadow: "0 0 22px rgba(255, 91, 112, 0.18)",
+              background: ABOUT_COPY_GRADIENT,
+              backgroundSize: ABOUT_GRADIENT_SIZE,
+              backgroundPosition: ABOUT_GRADIENT_START,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              willChange: "opacity, filter, background-position",
+            }}
+          >
+            {ABOUT_COPY.join(" ")}
+          </p>
+        </div>
       </div>
     </section>
   );
