@@ -39,8 +39,6 @@ const PHOTO_DEZOOM_DUR = 0.35;
 const PHOTO_ORIGIN = "836 470.5";
 const HERO_TITLE_GRADIENT =
   "linear-gradient(170deg, #5d0c55 0%, #b11279 22%, #ee2e73 45%, #ff8769 68%, #ffd36a 100%)";
-const ABOUT_HEADING_GRADIENT =
-  "linear-gradient(180deg, #b51f76 0%, #e83778 52%, #ff876e 100%)";
 const ABOUT_COPY = [
   "I am most myself in the quiet hours, when a hard problem and a clear mind",
   "are the only two things in the room. Curiosity is the engine; patience is the wheel.",
@@ -50,11 +48,12 @@ const ABOUT_COPY = [
   "but with the steady certainty of someone who has decided that limits exist only to be moved.",
   "Calm is not the absence of ambition. In me, it's the shape ambition takes.",
 ];
+const ABOUT_TEXT = `about me.\n\n${ABOUT_COPY.join(" ")}`;
 const ABOUT_COPY_GRADIENT =
   "radial-gradient(ellipse 42% 72% at 50% 50%, #ffa377 0%, #ff796d 18%, #f45274 36%, #c23576 56%, #7a1f5f 78%, #271027 100%)";
 const ABOUT_GRADIENT_SIZE = "155% 280%";
 const ABOUT_GRADIENT_START = "50% 0%";
-const ABOUT_GRADIENT_END = "50% 100%";
+const ABOUT_GRADIENT_END = "50% 78%";
 
 export function NameReveal() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -69,8 +68,7 @@ export function NameReveal() {
   const roleRailRef = useRef<HTMLUListElement>(null);
   const aboutBgRef = useRef<HTMLDivElement>(null);
   const aboutPanelRef = useRef<HTMLDivElement>(null);
-  const aboutHeadingRef = useRef<HTMLHeadingElement>(null);
-  const aboutCopyRef = useRef<HTMLParagraphElement>(null);
+  const aboutTextRef = useRef<HTMLParagraphElement>(null);
   const hintRef = useRef<HTMLDivElement>(null); // scroll hint over the bare photo
 
   useGSAP(
@@ -79,8 +77,7 @@ export function NameReveal() {
         "(prefers-reduced-motion: reduce)",
       ).matches;
       const headlineLines = headlineLineRefs.current.filter(Boolean);
-      const aboutCopy = aboutCopyRef.current;
-      const aboutTextTargets = [aboutHeadingRef.current, aboutCopy].filter(Boolean);
+      const aboutText = aboutTextRef.current;
 
       if (reduce) {
         // Static, legible fallback: show the final About state without the
@@ -120,12 +117,10 @@ export function NameReveal() {
           filter: "blur(0px)",
           clipPath: "inset(0% 0% 0% 0%)",
         });
-        gsap.set(aboutTextTargets, {
+        gsap.set(aboutText, {
           opacity: 1,
           filter: "blur(0px)",
           clipPath: "inset(0% 0% 0% 0%)",
-        });
-        gsap.set(aboutCopy, {
           backgroundPosition: ABOUT_GRADIENT_END,
         });
         gsap.set(hintRef.current, { opacity: 0 });
@@ -313,7 +308,7 @@ export function NameReveal() {
         1.9,
       );
       tl.fromTo(
-        aboutTextTargets,
+        aboutText,
         { opacity: 0, filter: "blur(12px)" },
         {
           opacity: 1,
@@ -325,7 +320,7 @@ export function NameReveal() {
         1.94,
       );
       tl.fromTo(
-        aboutCopy,
+        aboutText,
         { backgroundPosition: ABOUT_GRADIENT_START },
         {
           backgroundPosition: ABOUT_GRADIENT_END,
@@ -519,42 +514,27 @@ export function NameReveal() {
           willChange: "opacity, filter, clip-path",
         }}
       >
-        <div className="mx-auto w-full max-w-[72rem] text-left">
-          <h2
-            ref={aboutHeadingRef}
-            className="mb-6 font-[family-name:var(--font-display)] font-black lowercase leading-[0.9] sm:mb-8"
-            style={{
-              fontSize: "clamp(2.2rem, 4.7vw, 4.7rem)",
-              background: ABOUT_HEADING_GRADIENT,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              letterSpacing: "0",
-              textShadow: "0 0 30px rgba(231, 36, 126, 0.18)",
-              willChange: "opacity, filter",
-            }}
-          >
-            about me.
-          </h2>
-          <p
-            ref={aboutCopyRef}
-            className="max-w-[72rem] font-[family-name:var(--font-display)] font-extrabold leading-[1.14]"
-            style={{
-              fontSize: "clamp(1.25rem, 2.3vw, 2.25rem)",
-              letterSpacing: "0",
-              textShadow: "0 0 22px rgba(255, 91, 112, 0.18)",
-              background: ABOUT_COPY_GRADIENT,
-              backgroundSize: ABOUT_GRADIENT_SIZE,
-              backgroundPosition: ABOUT_GRADIENT_START,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              willChange: "opacity, filter, background-position",
-            }}
-          >
-            {ABOUT_COPY.join(" ")}
-          </p>
-        </div>
+        <h2 className="sr-only">About me</h2>
+        <p
+          ref={aboutTextRef}
+          aria-label={ABOUT_TEXT.replace(/\s+/g, " ")}
+          className="about-copy-surface mx-auto w-full max-w-[72rem] whitespace-pre-line text-left font-[family-name:var(--font-display)] font-extrabold leading-[1.14]"
+          style={{
+            background: ABOUT_COPY_GRADIENT,
+            backgroundSize: ABOUT_GRADIENT_SIZE,
+            backgroundPosition: ABOUT_GRADIENT_START,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            color: "transparent",
+            fontSize: "clamp(1.25rem, 2.3vw, 2.25rem)",
+            letterSpacing: "0",
+            textShadow: "0 0 24px rgba(255, 91, 112, 0.18)",
+            willChange: "opacity, filter, background-position",
+          }}
+        >
+          {ABOUT_TEXT}
+        </p>
       </div>
     </section>
   );
