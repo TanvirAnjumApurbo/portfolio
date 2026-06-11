@@ -88,6 +88,122 @@ body {
   }
 }
 
+.hero-release-line {
+  --release-ignite-y: 135%;
+  --release-ignite-opacity: 0;
+  /* heat-field stop colors (defaults = the cold violet-plum ember; GSAP
+     tweens these through crimson heat to the gold-core peak) */
+  --c0: #6b1763;
+  --c1: #5d145c;
+  --c2: #471050;
+  --c3: #350c41;
+  --c4: #200827;
+  --c5: #100613;
+  /* center-out bloom: each line is wiped open from its middle, soft-edged */
+  --line-bloom: 150%;
+  isolation: isolate;
+  position: relative;
+  transform-origin: center bottom;
+  -webkit-mask-image: radial-gradient(
+    ellipse 130% 320% at 50% 50%,
+    #000 calc(var(--line-bloom) - 34%),
+    transparent var(--line-bloom)
+  );
+  mask-image: radial-gradient(
+    ellipse 130% 320% at 50% 50%,
+    #000 calc(var(--line-bloom) - 34%),
+    transparent var(--line-bloom)
+  );
+}
+
+.hero-release-sheen {
+  background-clip: text;
+  /* warm light pass — amber/coral, never white, so the peak stays saturated */
+  background-image: radial-gradient(
+    circle at 50% 100%,
+    rgba(255, 214, 140, 0.85) 0%,
+    rgba(255, 128, 92, 0.6) 18%,
+    rgba(255, 63, 125, 0.35) 36%,
+    transparent 68%
+  );
+  background-position: 50% var(--release-ignite-y);
+  background-size: 145% 280%;
+  filter: blur(0.25px);
+  inset: 0;
+  mix-blend-mode: screen;
+  opacity: var(--release-ignite-opacity);
+  pointer-events: none;
+  position: absolute;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* About layers open through a circular aperture as the title light dies */
+.about-aperture {
+  --about-aperture: 0%;
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 46%,
+    #000 var(--about-aperture),
+    transparent calc(var(--about-aperture) + 18%)
+  );
+  mask-image: radial-gradient(
+    circle at 50% 46%,
+    #000 var(--about-aperture),
+    transparent calc(var(--about-aperture) + 18%)
+  );
+}
+
+.hero-platform-rail {
+  --platform-ignite-y: 132%;
+  --platform-ignite-opacity: 0;
+  will-change: opacity, transform, filter, color, text-shadow;
+}
+
+.hero-platform-label {
+  position: relative;
+}
+
+.hero-platform-label-sheen {
+  background-clip: text;
+  background-image: radial-gradient(
+    circle at 50% 100%,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 0.48) 26%,
+    transparent 68%
+  );
+  background-position: 50% var(--platform-ignite-y);
+  background-size: 145% 250%;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+  inset: 0;
+  opacity: var(--platform-ignite-opacity);
+  pointer-events: none;
+  position: absolute;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-circle-dim {
+  background-color: rgba(7, 6, 6, 0);
+  background-image:
+    radial-gradient(
+      circle at 50% 54%,
+      rgba(7, 6, 6, 0.98) 0%,
+      rgba(7, 6, 6, 0.92) 34%,
+      rgba(7, 6, 6, 0.58) 56%,
+      rgba(7, 6, 6, 0.12) 72%,
+      transparent 84%
+    ),
+    radial-gradient(
+      circle at 50% 54%,
+      transparent 0%,
+      rgba(7, 6, 6, 0.16) 48%,
+      rgba(7, 6, 6, 0.78) 100%
+    );
+  transform: scale(0.45);
+  transform-origin: 50% 54%;
+  will-change: opacity, transform, background-color;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
