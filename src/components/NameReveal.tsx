@@ -40,11 +40,12 @@ const PHOTO_ORIGIN = "836 470.5";
 // The release-date headline is painted with a per-line radial heat-field whose
 // stop colors live in CSS vars — GSAP tweens the COLORS themselves through the
 // reference site's full serial grade: glyphs surface whole from near-black ->
-// buried violet-plum ember -> crimson-magenta heat -> a long vivid pink dwell
-// with gold blooming from the bottom line's core -> a brief all-gold flood ->
-// a dying amber-brown as the light drains back out, bottom line first.
+// buried violet-plum ember -> crimson heat -> a vivid pink dwell (no gold
+// yet) -> the golden turn: apricot blooms in the core while the line ends
+// go RED (never pink+yellow at once) -> a brief all-gold flood -> a dying
+// amber-brown as the light drains back out, bottom line first.
 const HERO_LINE_GRADIENT =
-  "radial-gradient(ellipse 92% 280% at 50% 56%, var(--c0) 0%, var(--c1) 14%, var(--c2) 30%, var(--c3) 48%, var(--c4) 70%, var(--c5) 100%)";
+  "radial-gradient(ellipse 92% 280% at 50% 56%, var(--c0) 0%, var(--c1) 16%, var(--c2) 34%, var(--c3) 53%, var(--c4) 74%, var(--c5) 100%)";
 const IGNITE_VAR_KEYS = ["--c0", "--c1", "--c2", "--c3", "--c4", "--c5"] as const;
 // the surfacing state: fully-formed glyphs sitting barely above the black bg
 const IGNITE_DARK: Record<string, string> = {
@@ -93,24 +94,45 @@ const IGNITE_HEAT: Record<string, string>[] = [
     "--c5": "#170713",
   },
 ];
-// the long held peak, matched to the site's dwell: vivid magenta-pink body
-// with the warm gold blooming only from the core, bottom line hotter.
+// the held pink dwell, matched to the site: pure vivid pink-crimson with NO
+// gold in the core yet and wine (not purple) outer fades, bottom line hotter.
 const IGNITE_PEAK: Record<string, string>[] = [
   {
-    "--c0": "#ff8e5e",
-    "--c1": "#ff5f68",
-    "--c2": "#f93b74",
-    "--c3": "#d92070",
-    "--c4": "#a01361",
-    "--c5": "#471040",
+    "--c0": "#ff7d72",
+    "--c1": "#fc4f6e",
+    "--c2": "#ee2e6c",
+    "--c3": "#c51e58",
+    "--c4": "#801640",
+    "--c5": "#371027",
   },
   {
-    "--c0": "#ffc25c",
-    "--c1": "#ff9550",
-    "--c2": "#ff5f5e",
-    "--c3": "#f23a73",
-    "--c4": "#c2186a",
-    "--c5": "#5e124a",
+    "--c0": "#ff916e",
+    "--c1": "#ff5c68",
+    "--c2": "#f73a68",
+    "--c3": "#d02453",
+    "--c4": "#8c193c",
+    "--c5": "#3b1226",
+  },
+];
+// the golden turn (the site's pre-flood look): warm apricot-gold blooms in
+// each line's core while the line ENDS go coral-red — by the time yellow
+// exists there is no pink/purple left to mix with it.
+const IGNITE_GOLDEN: Record<string, string>[] = [
+  {
+    "--c0": "#ffc67e",
+    "--c1": "#ff9e62",
+    "--c2": "#f76b4f",
+    "--c3": "#d63f41",
+    "--c4": "#8e242e",
+    "--c5": "#3a1418",
+  },
+  {
+    "--c0": "#ffd286",
+    "--c1": "#ffac68",
+    "--c2": "#fb7754",
+    "--c3": "#de4844",
+    "--c4": "#992b33",
+    "--c5": "#3f161a",
   },
 ];
 // the ~half-second pre-drain flood: the whole block goes amber-gold and the
@@ -119,17 +141,17 @@ const IGNITE_FLARE: Record<string, string>[] = [
   {
     "--c0": "#ffd28e",
     "--c1": "#fab97c",
-    "--c2": "#e3905f",
-    "--c3": "#b35f49",
-    "--c4": "#6b3331",
+    "--c2": "#ee8c5a",
+    "--c3": "#c2554a",
+    "--c4": "#7c2f2e",
     "--c5": "#221114",
   },
   {
     "--c0": "#ffda9c",
     "--c1": "#fcc084",
-    "--c2": "#e69a66",
-    "--c3": "#b8654c",
-    "--c4": "#703634",
+    "--c2": "#f29660",
+    "--c3": "#c95c4c",
+    "--c4": "#823432",
     "--c5": "#241215",
   },
 ];
@@ -426,8 +448,8 @@ export function NameReveal() {
         },
         1.6,
       );
-      //    ... -> the vivid pink peak with gold blooming from the bottom
-      //    line's core. This state then DWELLS (the site holds it longest).
+      //    ... -> the vivid pink peak, still pure pink — the gold is NOT here
+      //    yet. This state then DWELLS (the site holds it longest).
       tl.to(
         headlineLines,
         {
@@ -437,6 +459,18 @@ export function NameReveal() {
           ease: "sine.inOut",
         },
         2.1,
+      );
+      //    ... -> the golden turn: apricot-gold grows out of each core while
+      //    the line ends shed the pink for coral-red, bottom line first.
+      tl.to(
+        headlineLines,
+        {
+          ...igniteVars(IGNITE_GOLDEN),
+          duration: 0.35,
+          stagger: { each: 0.08, from: "end" },
+          ease: "sine.inOut",
+        },
+        2.5,
       );
       tl.to(
         headlineLines,
@@ -472,11 +506,11 @@ export function NameReveal() {
         headlineLines,
         {
           ...igniteVars(IGNITE_FLARE),
-          duration: 0.2,
-          stagger: { each: 0.06, from: "end" },
+          duration: 0.18,
+          stagger: { each: 0.05, from: "end" },
           ease: "power1.inOut",
         },
-        2.85,
+        2.92,
       );
       // The warm halo lives on the UNMASKED h2 — a drop-shadow inside the lines'
       // bloom mask gets clipped to their border-box and reads as a grey plate.
@@ -527,6 +561,9 @@ export function NameReveal() {
         [holesRef.current, wordmarkRef.current],
         {
           scale: 0.75,
+          // dock the logo a touch higher (svg units) to clear the larger
+          // headline growing below it
+          y: -52,
           svgOrigin: NAME_ORIGIN,
           duration: 0.7,
           ease: "power1.inOut",
@@ -894,7 +931,7 @@ export function NameReveal() {
       >
         <div
           ref={cardRef}
-          className="absolute inset-x-0 top-[52%] flex flex-col items-center px-5 text-center opacity-0"
+          className="absolute inset-x-0 top-[46%] flex flex-col items-center px-5 text-center opacity-0"
           style={{
             willChange: "opacity, transform, filter, clip-path",
           }}
@@ -903,7 +940,7 @@ export function NameReveal() {
             ref={headlineRef}
             className="font-[family-name:var(--font-display)] font-black uppercase leading-[0.88]"
             style={{
-              fontSize: "clamp(2.25rem, 7vw, 6.75rem)",
+              fontSize: "clamp(2.25rem, 8.8vw, 8.5rem)",
               letterSpacing: "0",
               // Glow is animated per-line via drop-shadow during the ignition, so
               // the headline stays glowless while it is still a cold ember.
@@ -941,7 +978,7 @@ export function NameReveal() {
             <li className="flex items-center gap-2">
               <Code2 className="h-[1.05em] w-[1.05em]" strokeWidth={1.75} aria-hidden="true" />
               <span
-                className="hero-platform-label text-[0.78rem] uppercase tracking-[0.2em] sm:text-sm"
+                className="hero-platform-label text-[1.125rem] uppercase tracking-[0.2em] sm:text-[1.25rem]"
               >
                 Engineering
                 <span className="hero-platform-label-sheen" aria-hidden="true">
@@ -952,7 +989,7 @@ export function NameReveal() {
             <li className="flex items-center gap-2">
               <LineChart className="h-[1.05em] w-[1.05em]" strokeWidth={1.75} aria-hidden="true" />
               <span
-                className="hero-platform-label text-[0.78rem] uppercase tracking-[0.2em] sm:text-sm"
+                className="hero-platform-label text-[1.125rem] uppercase tracking-[0.2em] sm:text-[1.25rem]"
               >
                 Data Science
                 <span className="hero-platform-label-sheen" aria-hidden="true">
